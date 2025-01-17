@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./test.db?mode=memory&cache=shared"
+}
+
+model Student {
+  id      Int     @id @default(autoincrement()) @map("student_id")
+  // Vamos armazenar todas as turmas que o aluno participa ou já participou
+  class   Class?  @relation(fields: [classId], references: [id])
+  classId Int?
+  name    String
+  cpf     String  @unique
+  email   String? @unique
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  studentGrades    StudentGrade[]
+  studentFrequency StudentFrequency[]
+
+  @@map("students")
+}
+
+model StudentGrade {
+  id           Int        @id @default(autoincrement())
+  studentId    Int        @map("student_id")
+  student      Student    @relation(fields: [studentId], references: [id])
+  disciplineId String        @map("discipline_id")
+  discipline   Discipline @relation(fields: [disciplineId], references: [id])
+  bimester     String
+  classId      Int
+  class        Class      @relation(fields: [classId], references: [id])
+
+  // grade Decimal  @db.Decimal(4, 2)
+  grade Float
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("student_grades")
+}
+
+model StudentFrequency {
+  id           Int        @id @default(autoincrement())
+  studentId    Int        @map("student_id")
+  student      Student    @relation(fields: [studentId], references: [id])
+  classId      Int        @map("class_id")
+  class        Class      @relation(fields: [classId], references: [id])
+  disciplineId String        @map("discipline_id")
+  discipline   Discipline @relation(fields: [disciplineId], references: [id])
+  teacherId    Int        @map("teacher_id")
+  teacher      Teacher    @relation(fields: [teacherId], references: [id])
+  bimester     String
+  date         DateTime   @default(now())
+  wasPresent   Int    @default(1)
+  // Verificar se seria interssante ter dois campos para a data, um campo somente para o ano e outro com a data completa.
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  deletedAt    DateTime?  @map("deleted_at")
+
+  @@map("student_frequencies")
+}
+
+// Verificar regras de negócio como o professor não poder dar falta em alunos que não são da turma que ele da aula
+model Teacher {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  classTeacher      ClassTeacher[]
+  disciplineTeacher DisciplineTeacher[]
+  studentFrequency  StudentFrequency[]
+
+  @@map("teachers")
+}
+
+model Discipline {
+  id String @id @map("discipline_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  studentGrades     StudentGrade[]
+  disciplineTeacher DisciplineTeacher[]
+  studentFrequency  StudentFrequency[]
+
+  @@map("disciplines")
+}
+
+model ClassTeacher {
+  classId Int   @map("class_id")
+  class   Class @relation(fields: [classId], references: [id])
+
+  teacherId Int     @map("teacher_id")
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([classId, teacherId])
+  @@map("classes_teachers")
+}
+
+model DisciplineTeacher {
+  disciplineId String        @map("discipline_id")
+  discipline   Discipline @relation(fields: [disciplineId], references: [id])
+
+  teacherId Int     @map("teacher_id")
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
+
+  @@unique([disciplineId, teacherId])
+  @@map("disciplines_teachers")
+}
+
+model Class {
+  id Int @id @default(autoincrement())
+
+  // Verificar se o nome vai ser único  
+  name String
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  classTeacher     ClassTeacher[]
+  student          Student[]
+  studentFrequency StudentFrequency[]
+  studentGrade     StudentGrade[]
+
+  @@map("classes")
+}
