@@ -30,7 +30,7 @@ model StudentGrade {
   id           Int        @id @default(autoincrement())
   studentId    Int        @map("student_id")
   student      Student    @relation(fields: [studentId], references: [id])
-  disciplineId String        @map("discipline_id")
+  disciplineId String     @map("discipline_id")
   discipline   Discipline @relation(fields: [disciplineId], references: [id])
   bimester     String
   classId      Int
@@ -52,13 +52,13 @@ model StudentFrequency {
   student      Student    @relation(fields: [studentId], references: [id])
   classId      Int        @map("class_id")
   class        Class      @relation(fields: [classId], references: [id])
-  disciplineId String        @map("discipline_id")
+  disciplineId String     @map("discipline_id")
   discipline   Discipline @relation(fields: [disciplineId], references: [id])
   teacherId    Int        @map("teacher_id")
   teacher      Teacher    @relation(fields: [teacherId], references: [id])
   bimester     String
   date         DateTime   @default(now())
-  wasPresent   Int    @default(1)
+  wasPresent   Int        @default(1)
   // Verificar se seria interssante ter dois campos para a data, um campo somente para o ano e outro com a data completa.
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
@@ -77,9 +77,9 @@ model Teacher {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  classTeacher      ClassTeacher[]
-  disciplineTeacher DisciplineTeacher[]
-  studentFrequency  StudentFrequency[]
+  studentFrequency       StudentFrequency[]
+  TeacherClassDiscipline TeacherClassDiscipline[]
+  Lesson                 Lesson[]
 
   @@map("teachers")
 }
@@ -91,33 +91,12 @@ model Discipline {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  studentGrades     StudentGrade[]
-  disciplineTeacher DisciplineTeacher[]
-  studentFrequency  StudentFrequency[]
+  studentGrades          StudentGrade[]
+  studentFrequency       StudentFrequency[]
+  TeacherClassDiscipline TeacherClassDiscipline[]
+  Lesson                 Lesson[]
 
   @@map("disciplines")
-}
-
-model ClassTeacher {
-  classId Int   @map("class_id")
-  class   Class @relation(fields: [classId], references: [id])
-
-  teacherId Int     @map("teacher_id")
-  teacher   Teacher @relation(fields: [teacherId], references: [id])
-
-  @@unique([classId, teacherId])
-  @@map("classes_teachers")
-}
-
-model DisciplineTeacher {
-  disciplineId String        @map("discipline_id")
-  discipline   Discipline @relation(fields: [disciplineId], references: [id])
-
-  teacherId Int     @map("teacher_id")
-  teacher   Teacher @relation(fields: [teacherId], references: [id])
-
-  @@unique([disciplineId, teacherId])
-  @@map("disciplines_teachers")
 }
 
 model Class {
@@ -130,10 +109,61 @@ model Class {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  classTeacher     ClassTeacher[]
-  student          Student[]
-  studentFrequency StudentFrequency[]
-  studentGrade     StudentGrade[]
+  student                Student[]
+  studentFrequency       StudentFrequency[]
+  studentGrade           StudentGrade[]
+  TeacherClassDiscipline TeacherClassDiscipline[]
+  Lesson                 Lesson[]
 
   @@map("classes")
+}
+
+// Criar regra para garantir que as aulas do quadro de horário tenham a mesma turma
+model TimeSchedule {
+  id          Int      @id @default(autoincrement())
+  // Podemos criar um identificador para cada turma
+  description String
+  lessons     Lesson[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("times_schedules")
+}
+
+model Lesson {
+  id             Int           @id @default(autoincrement())
+  teacherId      Int           @map("teacher_id")
+  teacher        Teacher       @relation(fields: [teacherId], references: [id])
+  classId        Int           @map("class_id")
+  class          Class         @relation(fields: [classId], references: [id])
+  disciplineId   String        @map("discipline_id")
+  discipline     Discipline    @relation(fields: [disciplineId], references: [id])
+  // O dia da semana pode ser um enum para garantir um padrão de nomenclatura
+  weekDay        String        @map("week_day")
+  schedule       String
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+  TimeSchedule   TimeSchedule? @relation(fields: [timeScheduleId], references: [id])
+  timeScheduleId Int?
+
+  @@map("lessons")
+}
+
+model TeacherClassDiscipline {
+  teacherId    Int        @map("teacher_id")
+  teacher      Teacher    @relation(fields: [teacherId], references: [id])
+  classId      Int        @map("class_id")
+  class        Class      @relation(fields: [classId], references: [id])
+  disciplineId String     @map("discipline_id")
+  discipline   Discipline @relation(fields: [disciplineId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([teacherId, classId, disciplineId])
+  @@map("teachers_classes_disciplines")
 }

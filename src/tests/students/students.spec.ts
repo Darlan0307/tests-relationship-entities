@@ -131,7 +131,7 @@ describe("Alunos", () => {
     ]);
   });
 
-  it("Devo buscar a turma de um aluno", async () => {
+  it("Deve buscar a turma de um aluno", async () => {
     const newClass = await prismaDB.class.create({
       data: {
         name: "Nome da turma 1",
@@ -161,7 +161,7 @@ describe("Alunos", () => {
     });
   });
 
-  it("Devo consultar a frequência de um aluno", async () => {
+  it("Deve consultar a frequência de um aluno", async () => {
     const date = new Date();
 
     const newClass = await prismaDB.class.create({
@@ -270,7 +270,6 @@ describe("Alunos", () => {
           wasPresent: true,
         },
       });
-    console.log(allFrequenciesGroupedByDiscipline);
 
     expect(allFrequenciesGroupedByDiscipline).toMatchObject([
       {
